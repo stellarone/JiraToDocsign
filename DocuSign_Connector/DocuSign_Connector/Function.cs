@@ -35,7 +35,7 @@ public class Function
     {
 
         string myConnectionString = "server=db6.cqc3tpt63rhe.us-west-1.rds.amazonaws.com;uid=StellarAdmin;pwd=Stellar1c;database=StellarOne";
-        MySql.Data.MySqlClient.MySqlConnection conn = new MySqlConnection() ;
+        MySql.Data.MySqlClient.MySqlConnection conn = new MySqlConnection();
         conn.ConnectionString = myConnectionString;
 
         MySql.Data.MySqlClient.MySqlConnection conn2 = new MySqlConnection();
@@ -52,7 +52,7 @@ public class Function
         var sqlResult = cmd.ExecuteReaderAsync();
         sqlResult.Wait(0);
 
-        
+
 
         while (sqlResult.Result.HasRows)
         {
@@ -65,10 +65,10 @@ public class Function
             DocuSign.PostRequest.Initialheretab initialheretab = new DocuSign.PostRequest.Initialheretab();
             DocuSign.PostRequest.Signheretab signteretab = new DocuSign.PostRequest.Signheretab();
             DocuSign.PostRequest.Fullnametab fullnametab = new DocuSign.PostRequest.Fullnametab();
-            DocuSign.PostRequest.Texttab texttab = new DocuSign.PostRequest.Texttab();  
+            DocuSign.PostRequest.Texttab texttab = new DocuSign.PostRequest.Texttab();
             DocuSign.PostRequest.Titletab titletab = new DocuSign.PostRequest.Titletab();
             DocuSign.PostRequest.Radiogrouptab radiogrouptab = new DocuSign.PostRequest.Radiogrouptab();
-            DocuSign.PostRequest.Radio  radio= new DocuSign.PostRequest.Radio();
+            DocuSign.PostRequest.Radio radio = new DocuSign.PostRequest.Radio();
             DocuSign.PostRequest.Tabs tabs = new DocuSign.PostRequest.Tabs();
             List<DocuSign.PostRequest.Radiogrouptab> grouptabs = new List<DocuSign.PostRequest.Radiogrouptab>();
 
@@ -79,7 +79,7 @@ public class Function
 
 
             recipient.carbonCopies = new List<DocuSign.PostRequest.CarbonCopy>();
-            
+
 
             envelope.recipients = recipient;
             string customer = "";
@@ -90,9 +90,9 @@ public class Function
             String phaseID = "";
             {
                 string sqlPhase = $"Select * from Jira_Phase Where PhaseName = '{sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("SignOffForm")).ToString()}'";
-                 customer = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("Customer")).ToString();
-                 project = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("Project")).ToString();
-                 completionDate = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("CompletionDate")).ToString();
+                customer = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("Customer")).ToString();
+                project = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("Project")).ToString();
+                completionDate = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("CompletionDate")).ToString();
 
                 var cmdPhase = conn2.CreateCommand();
                 cmdPhase.CommandType = CommandType.Text;
@@ -108,25 +108,26 @@ public class Function
                 document.name = docName;
                 var str = (byte[])sqlPhaseResult.Result.GetValue(sqlPhaseResult.Result.GetOrdinal("Document"));
                 document.documentBase64 = System.Text.Encoding.UTF8.GetString(str);
+                //document.documentBase64 = System.Convert.ToBase64String(str);
                 phaseID = sqlPhaseResult.Result.GetValue(sqlPhaseResult.Result.GetOrdinal("RecID")).ToString();
                 sqlPhaseResult.Result.Close();
                 envelope.documents.Add(document);
             }
 
             //Carbon Copies
-            {                
+            {
                 var cmdCC = conn2.CreateCommand();
                 cmdCC.CommandType = CommandType.Text;
                 cmdCC.CommandText = "Select * from Jira_CarbonCopies";//Use the same carbon copies for all phases. Can update to have different CC for each phase. 
-                var cmdCCResult = cmdCC.ExecuteReaderAsync();   
-                cmdCCResult.Wait(0);    
+                var cmdCCResult = cmdCC.ExecuteReaderAsync();
+                cmdCCResult.Wait(0);
                 //cmdCCResult.Result.Read();  
                 while (cmdCCResult.Result.Read())
                 {
                     DocuSign.PostRequest.CarbonCopy carbonCopy = new DocuSign.PostRequest.CarbonCopy();
                     carbonCopy.email = cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("Email")).ToString();
                     carbonCopy.name = cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("Name")).ToString();
-                    carbonCopy.recipientId = Convert.ToInt32(cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("RecipientID"))) ;
+                    carbonCopy.recipientId = Convert.ToInt32(cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("RecipientID")));
                     carbonCopy.routingOrder = Convert.ToInt32(cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("RoutingNumber")));
                     recipient.carbonCopies.Add(carbonCopy);
 
@@ -138,7 +139,7 @@ public class Function
             DocuSign.PostRequest.Signer signer = new DocuSign.PostRequest.Signer();
             {
 
-                
+
                 signer.email = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("CustomerEmail")).ToString();
                 signer.name = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("CustomerSigner")).ToString();
                 signer.recipientId = 1;
@@ -147,7 +148,7 @@ public class Function
                 radiogrouptab.groupName = "GoNoGo";
                 grouptabs.Add(radiogrouptab);
 
-                tabs.radioGroupTabs= grouptabs;
+                tabs.radioGroupTabs = grouptabs;
                 tabs.dateSignedTabs = new List<DocuSign.PostRequest.Datesignedtab>();
                 tabs.fullNameTabs = new List<DocuSign.PostRequest.Fullnametab>();
                 tabs.titleTabs = new List<DocuSign.PostRequest.Titletab>();
@@ -157,7 +158,7 @@ public class Function
                 recipient.signers = new List<DocuSign.PostRequest.Signer>();
 
 
-                
+
 
 
             }
@@ -205,10 +206,10 @@ public class Function
                                 tabs.dateSignedTabs.Add(tab);
                             }
                             break;
-                        
+
                         case "fullNameTabs":
 
-                            
+
                             {
                                 DocuSign.PostRequest.Fullnametab tab = new DocuSign.PostRequest.Fullnametab();
                                 if (cmdTabsResult.Result.GetValue(cmdTabsResult.Result.GetOrdinal("xOffset")).ToString() != "0")
@@ -248,7 +249,7 @@ public class Function
                             break;
 
                         case "titleTabs":
-                            
+
                             {
                                 DocuSign.PostRequest.Titletab tab = new DocuSign.PostRequest.Titletab();
                                 if (cmdTabsResult.Result.GetValue(cmdTabsResult.Result.GetOrdinal("xOffset")).ToString() != "0")
@@ -325,7 +326,7 @@ public class Function
                                 }
                                 if (cmdTabsResult.Result.GetValue(cmdTabsResult.Result.GetOrdinal("ReplacementValue")).ToString() != "")
                                 {
-                                    tab.value = cmdTabsResult.Result.GetValue(cmdTabsResult.Result.GetOrdinal("ReplacementValue")).ToString().Replace("***PROJECT***",project).Replace("***COMPLETIONDATE***",completionDate);
+                                    tab.value = cmdTabsResult.Result.GetValue(cmdTabsResult.Result.GetOrdinal("ReplacementValue")).ToString().Replace("***PROJECT***", project).Replace("***COMPLETIONDATE***", completionDate);
                                 }
                                 tabs.textTabs.Add(tab);
 
@@ -356,7 +357,7 @@ public class Function
                                 }
                                 tabs.signHereTabs.Add(tab);
                             }
-                           
+
                             break;
                         case "radioGroupTabs":
                             {
@@ -378,7 +379,7 @@ public class Function
                                 {
                                     tab.anchorUnits = cmdTabsResult.Result.GetValue(cmdTabsResult.Result.GetOrdinal("AnchorUnits")).ToString();
                                 }
-                               tabs.radioGroupTabs[0].radios.Add(tab);
+                                tabs.radioGroupTabs[0].radios.Add(tab);
                             }
                             break;
                         default:
@@ -387,8 +388,9 @@ public class Function
 
 
                 }
+                cmdTabsResult.Result.Close();
 
-                
+
             }
 
             signer.tabs = tabs;
@@ -399,6 +401,36 @@ public class Function
                 NullValueHandling = NullValueHandling.Ignore
             });
 
+            string username = "";
+            string pw = "";
+            string key = "";
+
+            {
+                var cmdUserInfo = conn2.CreateCommand();
+                cmdUserInfo.CommandType = CommandType.Text;
+                cmdUserInfo.CommandText = @$"SELECT ConfigurationInfo FROM StellarOne.Environments Where EnvKey = 'DocuSignProd'";
+                DocuSign.Authentication.Rootobject auth =  JsonConvert.DeserializeObject<DocuSign.Authentication.Rootobject>(cmdUserInfo.ExecuteScalar().ToString());
+                username = auth.Username;
+                pw = auth.Password;
+                key = auth.IntegratorKey;
+                
+            }
+
+            DocuSign ds = new DocuSign();
+            string envelopeID = "";
+            envelopeID =ds.PostDocument(jsonPayload, username, pw,key);
+            if (envelopeID != "error")
+            {
+                var cmdUpdateStaging = conn2.CreateCommand();
+                cmdUpdateStaging.CommandType = CommandType.Text;
+                cmdUpdateStaging.CommandText = $"Update JiraBilling set PhaseSignOffStatus = 'Sent' Where RecID = {sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("RecID")).ToString()}";
+                cmdUpdateStaging.ExecuteScalar();
+
+            }
+            else
+            {
+
+            }
 
             sqlResult.Result.NextResult();
         }
@@ -406,8 +438,61 @@ public class Function
         return input.ToUpper();
     }
 }
+
 public class DocuSign
 {
+
+    public string PostDocument(string body, string  username, string password, string key)
+    {
+        try
+        {
+            var client = new RestClient("https://demo.docusign.net/restapi/v2.1/accounts/7773124/envelopes");
+            client.Timeout = -1;
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("X-DocuSign-Authentication", $"{{\"Username\":\"{username}\",\"Password\":\"{password}\",\"IntegratorKey\":\"{key}\"}}");
+            request.AddHeader("Content-Type", "application/json");
+            //var body = @"";
+            request.AddParameter("application/json", body, ParameterType.RequestBody);
+            IRestResponse response = client.Execute(request);
+            Console.WriteLine(response.Content);
+            DocuSign.PostResponse.Rootobject responseJSON = new PostResponse.Rootobject();
+            responseJSON = JsonConvert.DeserializeObject<DocuSign.PostResponse.Rootobject>(response.Content);
+            return responseJSON.envelopeId;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return "error";
+
+        }
+
+
+
+
+    }
+    public class Authentication
+    {
+
+        public class Rootobject
+        {
+            public string Username { get; set; }
+            public string Password { get; set; }
+            public string IntegratorKey { get; set; }
+        }
+
+    }
+    public class PostResponse
+    {
+
+        public class Rootobject
+        {
+            public string envelopeId { get; set; }
+            public string uri { get; set; }
+            public DateTime statusDateTime { get; set; }
+            public string status { get; set; }
+        }
+
+    }
     public class PostRequest
     {
 
