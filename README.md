@@ -24,4 +24,6 @@ The following Jira fields must be populated to get picked up for automation:
 When these fields are populated, the integration will send the appropriate sign-off form once the task is set to UA-Testing.
 Once the document is signed, the integration will move the task to Ready for Production.
 
+![image](https://user-images.githubusercontent.com/55806446/179866856-c06f2068-11f9-4251-bebf-8d275b677482.png)
+
 
