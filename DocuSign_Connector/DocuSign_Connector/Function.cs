@@ -34,6 +34,7 @@ public class Function
     public string FunctionHandler(string input, ILambdaContext context)
     {
 
+        
         string myConnectionString = "server=db6.cqc3tpt63rhe.us-west-1.rds.amazonaws.com;uid=StellarAdmin;pwd=Stellar1c;database=StellarOne";
         MySql.Data.MySqlClient.MySqlConnection conn = new MySqlConnection();
         conn.ConnectionString = myConnectionString;
@@ -71,8 +72,12 @@ public class Function
             DocuSign.PostRequest.Radio radio = new DocuSign.PostRequest.Radio();
             DocuSign.PostRequest.Tabs tabs = new DocuSign.PostRequest.Tabs();
             List<DocuSign.PostRequest.Radiogrouptab> grouptabs = new List<DocuSign.PostRequest.Radiogrouptab>();
+            DocuSign.PostRequest.Eventnotification eventnotification = new DocuSign.PostRequest.Eventnotification();
+            DocuSign.PostRequest.Envelopeevent envelopeevent = new DocuSign.PostRequest.Envelopeevent();    
+
 
             envelope.documents = new List<DocuSign.PostRequest.Document>();
+
 
 
 
@@ -84,15 +89,28 @@ public class Function
             envelope.recipients = recipient;
             string customer = "";
             string project = "";
-            string completionDate = "";
+             string completionDate = ""; //This is actually Testing Date
 
             sqlResult.Result.Read();
+            eventnotification.envelopeEvents = new List<DocuSign.PostRequest.Envelopeevent>();
+            envelopeevent.envelopeEventStatusCode = "completed";
+            eventnotification.envelopeEvents.Add(envelopeevent);
+            eventnotification.url = $"https://i77nj699mj.execute-api.us-west-1.amazonaws.com/default/DocuSign_Listener?RecID={sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("RecID")).ToString()}";
+            //eventnotification.url = $"https://webhook.site/806ee066-52db-4fe8-b13b-8bbf676d5208?RecID={sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("RecID")).ToString()}";
+        
+            eventnotification.includeDocuments = "false";
+            eventnotification.includeDocumentFields = "false";
+            eventnotification.requireAcknowledgment = "true";
+
+            envelope.eventNotification = eventnotification;
+
             String phaseID = "";
             {
                 string sqlPhase = $"Select * from Jira_Phase Where PhaseName = '{sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("SignOffForm")).ToString()}'";
                 customer = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("Customer")).ToString();
                 project = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("Project")).ToString();
-                completionDate = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("CompletionDate")).ToString();
+                completionDate = DateTime.Parse(sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("UATestingDate")).ToString()).ToString("dd/MM/yyyy");
+
 
                 var cmdPhase = conn2.CreateCommand();
                 cmdPhase.CommandType = CommandType.Text;
@@ -419,7 +437,7 @@ public class Function
             DocuSign ds = new DocuSign();
             string envelopeID = "";
             envelopeID =ds.PostDocument(jsonPayload, username, pw,key);
-            if (envelopeID != "error")
+            if ((envelopeID ?? "") != "error")
             {
                 var cmdUpdateStaging = conn2.CreateCommand();
                 cmdUpdateStaging.CommandType = CommandType.Text;
@@ -513,7 +531,7 @@ public class DocuSign
             public string includeDocuments { get; set; }
             public string includeDocumentFields { get; set; }
             public string requireAcknowledgment { get; set; }
-            public Envelopeevent[] envelopeEvents { get; set; }
+            public List<Envelopeevent> envelopeEvents { get; set; }
         }
 
         public class Envelopeevent

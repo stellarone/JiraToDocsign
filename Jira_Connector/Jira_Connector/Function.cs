@@ -44,7 +44,7 @@ public class Function
             var request = new RestRequest(Method.GET);
             request.AddHeader("Authorization", "Basic cmljaGFyZEBzdGVsbGFyb25lY29uc3VsdGluZy5jb206VXJLS0JnMjkxMHc0ZEx2d1JUYW1EMDUx");
             request.AddHeader("Accept", "application/json");
-            request.AddHeader("Cookie", "atlassian.xsrf.token=d1260a73-5774-4d78-a618-e65c17086c1f_b8b912d5f62d9f53b5406381e57867eb2cde5b96_lin");
+            
             IRestResponse response = client.Execute(request);
             Console.WriteLine(response.Content);
 

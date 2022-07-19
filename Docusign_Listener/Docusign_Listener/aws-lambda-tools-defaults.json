@@ -12,13 +12,16 @@
     "function-runtime" : "dotnet6",
     "function-memory-size" : 512,
     "function-timeout"     : 15,
-    "function-handler"     : "Jira_Connector::Jira_Connector.Function::FunctionHandler",
+    "function-handler"     : "Docusign_Listener::Docusign_Listener.Function::FunctionHandler",
     "framework"            : "net6.0",
-    "function-name"        : "Jira_Connector",
+    "function-name"        : "DocuSign_Listener",
     "function-description" : "",
     "package-type"         : "Zip",
+    "function-role"        : "arn:aws:iam::282045748497:role/Lambda_DynamoDB_Stream",
     "function-architecture" : "x86_64",
-    "tracing-mode"          : "PassThrough",
-    "environment-variables" : "",
-    "image-tag"             : ""
+    "function-subnets"      : "subnet-0dc94eece0e2332e1",
+    "function-security-groups" : "sg-09c0b954fcd690e83",
+    "tracing-mode"             : "PassThrough",
+    "environment-variables"    : "",
+    "image-tag"                : ""
 }
