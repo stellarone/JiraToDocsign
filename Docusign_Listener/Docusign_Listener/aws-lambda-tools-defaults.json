@@ -19,7 +19,7 @@
     "package-type"         : "Zip",
     "function-role"        : "arn:aws:iam::282045748497:role/Lambda_DynamoDB_Stream",
     "function-architecture" : "x86_64",
-    "function-subnets"      : "subnet-0dc94eece0e2332e1",
+    "function-subnets"      : "subnet-0106b15d3afd2528f",
     "function-security-groups" : "sg-09c0b954fcd690e83",
     "tracing-mode"             : "PassThrough",
     "environment-variables"    : "",

@@ -82,20 +82,21 @@ public class Function
 
 
             //Transition to Ready for Production
-            var client = new RestClient($"https://stellarone.atlassian.net/rest/api/2/issue/{milestone}/transitions");
-            client.Timeout = -1;
-            var request = new RestRequest(Method.POST);
-            request.AddHeader("Authorization", "Basic cmljaGFyZEBzdGVsbGFyb25lY29uc3VsdGluZy5jb206VXJLS0JnMjkxMHc0ZEx2d1JUYW1EMDUx");
-            request.AddHeader("Accept", "application/json");
+            //Disable for now 01/4/2024 so that We can manually flip for a while
+            ////var client = new RestClient($"https://stellarone.atlassian.net/rest/api/2/issue/{milestone}/transitions");
+            ////client.Timeout = -1;
+            ////var request = new RestRequest(Method.POST);
+            ////request.AddHeader("Authorization", "Basic cmljaGFyZEBzdGVsbGFyb25lY29uc3VsdGluZy5jb206VXJLS0JnMjkxMHc0ZEx2d1JUYW1EMDUx");
+            ////request.AddHeader("Accept", "application/json");
             
-            request.AddHeader("Content-Type", "application/json");
+            ////request.AddHeader("Content-Type", "application/json");
             
-            var body = "{\"transition\": {\"id\": \"71\"}}";
-            Console.WriteLine(body);
-            request.AddParameter("application/json", body, ParameterType.RequestBody);
-            Console.WriteLine("Executing Transition");
-            var response = client.Execute(request);
-            Console.WriteLine(response.Content);
+            ////var body = "{\"transition\": {\"id\": \"71\"}}";
+            ////Console.WriteLine(body);
+            ////request.AddParameter("application/json", body, ParameterType.RequestBody);
+            ////Console.WriteLine("Executing Transition");
+            ////var response = client.Execute(request);
+            ////Console.WriteLine(response.Content);
 
         }
         catch(Exception ex)

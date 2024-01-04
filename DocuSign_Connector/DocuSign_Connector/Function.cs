@@ -16,6 +16,10 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using RestSharp;
+using DocuSign.eSign.Client;
+using DocuSign.eSign.Client.Auth;
+using static DocuSign.eSign.Client.Auth.OAuth.UserInfo;
+using static DocuSign.eSign.Client.Auth.OAuth;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -109,7 +113,7 @@ public class Function
                 string sqlPhase = $"Select * from Jira_Phase Where PhaseName = '{sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("SignOffForm")).ToString()}'";
                 customer = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("Customer")).ToString();
                 project = sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("Project")).ToString();
-                completionDate = DateTime.Parse(sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("UATestingDate")).ToString()).ToString("dd/MM/yyyy");
+                completionDate = DateTime.Parse(sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("UATestingDate")).ToString()).ToString("MM/dd/yyyy");
 
 
                 var cmdPhase = conn2.CreateCommand();
@@ -221,6 +225,7 @@ public class Function
                                 {
                                     tab.anchorUnits = cmdTabsResult.Result.GetValue(cmdTabsResult.Result.GetOrdinal("AnchorUnits")).ToString();
                                 }
+                               
                                 tabs.dateSignedTabs.Add(tab);
                             }
                             break;
@@ -426,7 +431,7 @@ public class Function
             {
                 var cmdUserInfo = conn2.CreateCommand();
                 cmdUserInfo.CommandType = CommandType.Text;
-                cmdUserInfo.CommandText = @$"SELECT ConfigurationInfo FROM StellarOne.Environments Where EnvKey = 'DocuSignProd'";
+                cmdUserInfo.CommandText = @$"SELECT ConfigurationInfo FROM StellarOne.Environments Where EnvKey = 'DocuSignProd2'";
                 DocuSign.Authentication.Rootobject auth =  JsonConvert.DeserializeObject<DocuSign.Authentication.Rootobject>(cmdUserInfo.ExecuteScalar().ToString());
                 username = auth.Username;
                 pw = auth.Password;
@@ -436,7 +441,9 @@ public class Function
 
             DocuSign ds = new DocuSign();
             string envelopeID = "";
-            envelopeID =ds.PostDocument(jsonPayload, username, pw,key);
+            //envelopeID =ds.PostDocumentJWT(jsonPayload, "9191ef52-ef59-4c0f-9b51-e253e6891358");
+           envelopeID = ds.PostDocumentJWT(jsonPayload, "6d1cdded-c1a2-4756-be57-6fb4da2f49a1");
+            
             if ((envelopeID ?? "") != "error")
             {
                 var cmdUpdateStaging = conn2.CreateCommand();
@@ -464,7 +471,8 @@ public class DocuSign
     {
         try
         {
-            var client = new RestClient("https://demo.docusign.net/restapi/v2.1/accounts/7773124/envelopes");
+            //var client = new RestClient("https://demo.docusign.net/restapi/v2.1/accounts/7773124/envelopes");
+            var client = new RestClient("https://na3.docusign.net/restapi/v2.1/accounts/9582782/envelopes");
             client.Timeout = -1;
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-DocuSign-Authentication", $"{{\"Username\":\"{username}\",\"Password\":\"{password}\",\"IntegratorKey\":\"{key}\"}}");
@@ -486,6 +494,142 @@ public class DocuSign
 
 
 
+
+    }
+
+    public string PostDocumentJWT(string body, string UserID)
+    {
+        try
+        {
+
+
+            DocuSignClient client1 = new DocuSignClient();
+            var scopes = new List<string> { OAuth.Scope_SIGNATURE, OAuth.Scope_IMPERSONATION };
+            byte[] bytes = GenerateStreamFromString();
+            OAuth.OAuthToken tokenInfo = client1.RequestJWTUserToken(
+               "6090c753-743f-41b7-94fd-601a1a83adc2",
+               UserID,
+               "account.docusign.com",
+               bytes,
+               1,
+               scopes);
+
+            DocuSignClient client2 = new DocuSignClient();
+            client2.SetOAuthBasePath("account.docusign.com");
+            OAuth.UserInfo userInfo = client2.GetUserInfo(tokenInfo.access_token);
+            
+            Account acct = userInfo.Accounts.FirstOrDefault();
+
+            //var client = new RestClient("https://demo.docusign.net/restapi/v2.1/accounts/7773124/envelopes");
+            var client = new RestClient($"{acct.BaseUri}/restapi/v2.1/accounts/{acct.AccountId}/envelopes");
+
+            client.Timeout = -1;
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("Authorization", $"Bearer {tokenInfo.access_token}");
+            //request.AddHeader("Content-Type", "application/json");
+            //var body = @"";
+            request.AddParameter("application/json", body, ParameterType.RequestBody);
+            IRestResponse response = client.Execute(request);
+            Console.WriteLine(response.Content);
+            DocuSign.PostResponse.Rootobject responseJSON = new PostResponse.Rootobject();
+            responseJSON = JsonConvert.DeserializeObject<DocuSign.PostResponse.Rootobject>(response.Content);
+            return responseJSON.envelopeId;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return "error";
+
+        }
+
+
+
+
+
+
+    }
+    public static byte[] GenerateStreamFromString()
+    {
+        //        string s = @"-----BEGIN RSA PRIVATE KEY-----
+        //MIIEpAIBAAKCAQEAmKjhmaIU/2igssZG6MpwMBhrd3KG2Tte8ipt28Necmpx0T03
+        //z9Hw2oTwQ5xVOB+T7vGhEsNDKxh8XATxl6dXCNFpp20uEQzjPmnHEPTzdVUKT2vR
+        //5VNN3PPiFiFV2cyMyt6YaBwXDeX7Emulh7CkGuBF8Y85WAOsIKefDS4zIrA+KRHB
+        //4gvHCJr+NuAvOZqh2wUHym4W7xonHkjlS9Ya/xP7fXOSi96J0Yw2ElCE0Pwb0EoV
+        //QQVIFIzWl7zNL1mCrgo1ASc0t/cFyFH1GF9WshBkn4BQZZMjcF6ryPbOJKnYy4CR
+        //RdjzIYIoC4VivhP0iRi8audvtxPaHohvSXnnNwIDAQABAoIBABUlEzZ59kmYPuX0
+        //Q78bxyVKRJxjXx04tYJ6cQQHEA5uAvzV62ScMi26SyM6RK2E5jMrAcH9DNErz5HZ
+        //V3NHiO0eQHGh1EclT1aGRT3qh8xBLq/ogcavXrITj8W78U29IOU6psaI2YKhz8Bx
+        //65gbVeepF9cJHQq9W3qcbRHgy9Fqe2vPKSONGiI6JQ8Tb3ogcBAfG2FkfR0Qa0zR
+        //0+2H1rp5pF6w5yOVNallQXHcVkjfRYZ8r9nB3U4Aq0jAbL7vpjuBE8R3ihKgCNgc
+        //b/WVrBT/2xKgul/hyZiQYTH/7W0ZykVw5mlD/l1z4TH9lIT6Dp8hyA/pUGMLUcSg
+        //iqOizbUCgYEA6jt+wp4xUm3zd/kfT+UW8uPJV2rcGX2MfB+haUEIwBV5q/sfr5bC
+        //rTe0aUg52XGZMoHGrCEvF0AT7a9tpkbYFE0tLpgMqVvjRpzHopO1KlsWN3eTsX0L
+        //UgaIgVzjUhlELuXvCguAykxYuahbWoW1piOmuAn8ETMw+HjpRpt3naMCgYEApti7
+        //HYiS5x8cBGF4jEK1HZIcjek2PGby2+6PxiyQ6WuhQKbMezt9fR8ZDIH0fChAK30R
+        //c9tM/PwuTvilaBmivyEa3Q06dA9+H8GmRKR1VTLzkz8G6y0rLShL+Hdo4Y4tCdie
+        //fbSHzWsv++DhD2j1I8OkNeGM5kgbblFqx/F4AV0CgYEAjaLOQsa/klWULI7CxWAE
+        //4XimDis6zlshsQi7ZNcDgIs72KfwgA/Mxktx11vqRzcu6OCajwk93XRM2KQEzM/3
+        //50bHtG4S8fHzW4aAHSnuGZ+crourDl9Lkh0LPBY8Cy/mD+nQAqX0Cd/iotlP7EwA
+        //DGdwb8bx2kC3MviCLsThrrsCgYAqSfarVql9YTo1tgra6jGDzDvmkDzJ9IIL0pyo
+        //azVTpI8blutvNLXq183+iJXSPlV9cFbTGbuax8RpCcbK6uyAK0Dm1GqDbkXWgLvG
+        //3DRNIvvvz2LOiwVNjdArqwBvYxzxSPFrBS4Cl+9ylR4WTNENfpIJgiC3YYFqZcJ9
+        //6Ss0lQKBgQCRx3QFycCHMN49HL1gAhA/Oy6cxoNg+U0yTGZvKLIeTua/KdsGGSvr
+        //NPUJY9Fg6II9AU+yy07sip8bBAvaTk/sX3Lc2KlsIWyZRQX1u3OJBtxhNFGaYMph
+        //c4XsqJrLnz0BNrENVm+CZ+x8nKy/KQQ+1L4LhFl8zr4ruNvdc0D/6A==
+        //-----END RSA PRIVATE KEY-----";
+        string s = @"-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEAqDMtZS9yxNobLwSckRXksOG+USwY5AKa+G+GqVTq7ejCgyHJ
+FEb5M9btcjH7zlNY4uTnd3c8yCnEpUYWFRfvM183Uux/a0POva/Iz1XyLSp+OcrO
+viqQ40QluXNAxDWsjlRbO34PuKlqInrc/9UrK/VYz19X0BZcM5ID7h/b8LXvc+v2
+vcm/GYqL+DfAj8q83Xjp0jqk3maH7UfZy/ASojI+VX0SMEj8wd8ccWKq3/XC8G3f
+nu3dm3GGQLHhCNeL3Dh9k8kg+87479cFhGCBrICXHaRXQ3g4VNXGfEAE1Lof29OU
+HC9IzLrctYEY37oWwsvxx4ZiylXgNuQJoMzAowIDAQABAoIBABZIQVlIQeIGKte9
+uqgVyGgOX9IND3cVSUZkL+i60SyXSz1n+mVvSZAuhuI78OnSbNISFP/kke7Kabyj
+XkWJGC0sDf40SmUBZKAIa4fcEOse1/37+guDRBJ3cq/wrsHPgn6Qek2VU6vY9bB/
+qktSCBgYtp0yOkXc0HYcf9zJ568pkyqnCHZ9qQqAEm1ldWfgriSWhSPjxmJr0tXE
+GaQgKqFAOk4DonOnz1VgKdhLH/mHdhiaeIlRabvVd45RfNAnXdKOcygYBfe4Oupc
+rE4O48hCAKDCT1sF/33wuNL5Y0iWIMunJQY78pmbxl773If/5Dm9y8VkKrBckIpe
+L57UNqECgYEA94+EnXCvJxG2JT5Rqr2hsDd0ox/XinPXwZbaIYZYMbwgJJAvMLxi
+I7eO5kmcf0eXkxBLevtqmi1B5yK9k2UG9UODymWy4AIqZJRb6oBtCp42t9mNLXIO
+MVb2uMD9mfDU1+06tdil4hM52aUAmvWHzlE70SHeGGxOzBkYc7fAfqsCgYEAre8S
+ZTpJug2TgQsqlnWwVPhw2ksKSEqHiwX2YHR7bnM5zWTixdDGnp9aFTw1gKxgUjIW
+6zhrhoEjyTrR8qfg7KPI4IOP+K6u0nAiJ7thKKW8jDXKnRHzAWQfmygd2NDdZZoI
+P1nb0gJD26X9lkZMk/+Rf47WOk+pDLeiINHgZekCgYAYmTokKr48s5XVvYt/27fl
+Op1sWA2ixD/8DHFAQ4kf6AGJoIoP3agixGp+l3Hlc8er5UKaxcCh8T1LKjiMHM3E
+MSE3S0Oq3ow30kYP1xL+qxnkysksatjeLjX1xbdtRHDhw8DBsPVKsX5eEfctbpg/
+9/JppWPcKWbrANNdLDUEYQKBgFHjd86u5Z0x3RtpLXDPEei/Wyp7H+kvJad/dCKv
+VJmIqFMaR2YIyCpQLfJHeY0OGv830/CEjKMz06xfBA9xmITxC5cgeb0ESQyMfJgm
+MTUY6q88eBsBI16pS/QZrAuzMjkujul8nfC+3kHgYYbJrC4VqePbVOL5NEbnge5f
+wX1ZAoGBAJ5KjWdEvI8rN96AcBxuBnBMo46GfMShau3htUSuGP9Wsr4ssRw6TQgD
+pJKnwj8MoKVZ4qkvjIvIgfd0Upk7/A0UbVZM5Il77pFEkb0PvZr6xorsohbOf7fU
+Ya2sKqwPG+pVLsphHS/Ulc67t/SwKKWs1YZUOMNCnIxQMtDSdZ/F
+-----END RSA PRIVATE KEY-----";
+        var stream = new MemoryStream();
+        var writer = new StreamWriter(stream);
+        writer.Write(s);
+        writer.Flush();
+        stream.Position = 0;
+
+        return ToByte(stream);
+    }
+
+    public static byte[] ToByte(Stream value)
+    {
+        if (value == null)
+            return null;
+
+        if (value is MemoryStream)
+        {
+            return ((MemoryStream)value).ToArray();
+        }
+        else
+        {
+            using (MemoryStream stream = new MemoryStream())
+            {
+                value.CopyTo(stream);
+                return stream.ToArray();
+            }
+        }
 
     }
     public class Authentication

@@ -28,15 +28,15 @@ public class Function
         string myConnectionString = "server=db6.cqc3tpt63rhe.us-west-1.rds.amazonaws.com;uid=StellarAdmin;pwd=Stellar1c;database=StellarOne";
         MySql.Data.MySqlClient.MySqlConnection conn = new MySql.Data.MySqlClient.MySqlConnection();
         conn.ConnectionString = myConnectionString;
-       
+
         conn.Open();
-  
+
         //configInfoCmd.CommandType = CommandType.Text;
         //configInfoCmd.CommandText = $"Select ConfigurationInfo from Environments Where EnvKey='{envID}'";
 
         int startAt = 0;
         int issueCount = 100;
-        
+
         while (issueCount == 100)
         {
             RestClient client = new RestClient($"https://stellarone.atlassian.net/rest/api/3/search?jql=\"Docusign\"=Yes&startAt={startAt}&maxResults=1000");
@@ -44,7 +44,7 @@ public class Function
             var request = new RestRequest(Method.GET);
             request.AddHeader("Authorization", "Basic cmljaGFyZEBzdGVsbGFyb25lY29uc3VsdGluZy5jb206VXJLS0JnMjkxMHc0ZEx2d1JUYW1EMDUx");
             request.AddHeader("Accept", "application/json");
-            
+
             IRestResponse response = client.Execute(request);
             Console.WriteLine(response.Content);
 
@@ -55,7 +55,7 @@ public class Function
 
             foreach (var issue in results.issues)
             {
-                
+
                 var cmdSQL = conn.CreateCommand();
                 cmdSQL.CommandTimeout = 600;
                 cmdSQL.CommandType = CommandType.StoredProcedure;
@@ -70,9 +70,13 @@ public class Function
                 {
                     cmdSQL.Parameters.AddWithValue("_Project", "");
                 }
+                if(issue.key == "C00000186-26")
+                {
+                    Console.WriteLine("Stop");
+                }
                 cmdSQL.Parameters.AddWithValue("_Task", issue.fields.customfield_10029?.value.ToString() ?? "");
                 cmdSQL.Parameters.AddWithValue("_BacklogStatus", issue.fields.customfield_10030?.value?.ToString() ?? "");
-                cmdSQL.Parameters.AddWithValue("_Status",issue.fields.status.name.ToString());
+                cmdSQL.Parameters.AddWithValue("_Status", issue.fields.status.name.ToString());
                 cmdSQL.Parameters.AddWithValue("_DueDate", issue.fields.duedate?.ToString() ?? "");
                 cmdSQL.Parameters.AddWithValue("_BillingType", issue.fields.customfield_10036?.value.ToString() ?? "");
                 cmdSQL.Parameters.AddWithValue("_BillingNotes", issue.fields.customfield_10034?.ToString() ?? "");
@@ -872,3 +876,80 @@ public class JIRA
 
     }
 }
+
+
+
+
+public class Rootobject
+{
+    public Fulfillment_Orders[] fulfillment_orders { get; set; }
+}
+
+public class Fulfillment_Orders
+{
+    public long id { get; set; }
+    public long shop_id { get; set; }
+    public long order_id { get; set; }
+    public long assigned_location_id { get; set; }
+    public string request_status { get; set; }
+    public string status { get; set; }
+    public string[] supported_actions { get; set; }
+    public Destination destination { get; set; }
+    public Line_Items[] line_items { get; set; }
+    public DateTime fulfill_at { get; set; }
+    public object international_duties { get; set; }
+    public object[] fulfillment_holds { get; set; }
+    public Delivery_Method delivery_method { get; set; }
+    public Assigned_Location assigned_location { get; set; }
+    public object[] merchant_requests { get; set; }
+}
+
+public class Destination
+{
+    public long id { get; set; }
+    public string address1 { get; set; }
+    public string address2 { get; set; }
+    public string city { get; set; }
+    public object company { get; set; }
+    public string country { get; set; }
+    public string email { get; set; }
+    public string first_name { get; set; }
+    public string last_name { get; set; }
+    public string phone { get; set; }
+    public string province { get; set; }
+    public string zip { get; set; }
+}
+
+public class Delivery_Method
+{
+    public long id { get; set; }
+    public string method_type { get; set; }
+}
+
+public class Assigned_Location
+{
+    public string address1 { get; set; }
+    public string address2 { get; set; }
+    public string city { get; set; }
+    public string country_code { get; set; }
+    public long location_id { get; set; }
+    public string name { get; set; }
+    public string phone { get; set; }
+    public string province { get; set; }
+    public string zip { get; set; }
+}
+
+public class Line_Items
+{
+    public long id { get; set; }
+    public long shop_id { get; set; }
+    public long fulfillment_order_id { get; set; }
+    public int quantity { get; set; }
+    public long line_item_id { get; set; }
+    public long inventory_item_id { get; set; }
+    public int fulfillable_quantity { get; set; }
+    public long variant_id { get; set; }
+}
+
+
+
