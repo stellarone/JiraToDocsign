@@ -138,24 +138,41 @@ public class Function
 
             //Carbon Copies
             {
-                var cmdCC = conn2.CreateCommand();
-                cmdCC.CommandType = CommandType.Text;
-                cmdCC.CommandText = "Select * from Jira_CarbonCopies";//Use the same carbon copies for all phases. Can update to have different CC for each phase. 
-                var cmdCCResult = cmdCC.ExecuteReaderAsync();
-                cmdCCResult.Wait(0);
+                //var cmdCC = conn2.CreateCommand();
+                //cmdCC.CommandType = CommandType.Text;
+                //cmdCC.CommandText = "Select * from Jira_CarbonCopies";//Use the same carbon copies for all phases. Can update to have different CC for each phase. 
+                //var cmdCCResult = cmdCC.ExecuteReaderAsync();
+                //cmdCCResult.Wait(0);
+
+                var cmdPM = conn2.CreateCommand();
+                cmdPM.CommandType = CommandType.Text;
+                cmdPM.CommandText = $"Select * from ProjectManagers Where `Full Name` = '{sqlResult.Result.GetValue(sqlResult.Result.GetOrdinal("PM")).ToString()}'";//Use the same carbon copies for all phases. Can update to have different CC for each phase. 
+                var cmdPMResult = cmdPM.ExecuteReaderAsync();
+                cmdPMResult.Wait(0);
                 //cmdCCResult.Result.Read();  
-                while (cmdCCResult.Result.Read())
+                int i = 2;
+                //while (cmdCCResult.Result.Read())
+                //{
+                //    DocuSign.PostRequest.CarbonCopy carbonCopy = new DocuSign.PostRequest.CarbonCopy();
+                //    carbonCopy.email = cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("Email")).ToString();
+                //    carbonCopy.name = cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("Name")).ToString();
+                //    carbonCopy.recipientId = Convert.ToInt32(cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("RecipientID")));
+                //    carbonCopy.routingOrder = Convert.ToInt32(cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("RoutingNumber")));
+                //    recipient.carbonCopies.Add(carbonCopy);
+
+                //}
+                while (cmdPMResult.Result.Read())
                 {
                     DocuSign.PostRequest.CarbonCopy carbonCopy = new DocuSign.PostRequest.CarbonCopy();
-                    carbonCopy.email = cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("Email")).ToString();
-                    carbonCopy.name = cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("Name")).ToString();
-                    carbonCopy.recipientId = Convert.ToInt32(cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("RecipientID")));
-                    carbonCopy.routingOrder = Convert.ToInt32(cmdCCResult.Result.GetValue(cmdCCResult.Result.GetOrdinal("RoutingNumber")));
+                    carbonCopy.email = cmdPMResult.Result.GetValue(cmdPMResult.Result.GetOrdinal("Email")).ToString();
+                    carbonCopy.name = cmdPMResult.Result.GetValue(cmdPMResult.Result.GetOrdinal("Full Name")).ToString();
+                    carbonCopy.recipientId = i;
+                    carbonCopy.routingOrder = i;
                     recipient.carbonCopies.Add(carbonCopy);
 
                 }
-
-                cmdCCResult.Result.Close();
+                //cmdCCResult.Result.Close();
+                cmdPMResult.Result.Close();
             }
             //Signers - Just a single signer for now. Signer defined on task
             DocuSign.PostRequest.Signer signer = new DocuSign.PostRequest.Signer();

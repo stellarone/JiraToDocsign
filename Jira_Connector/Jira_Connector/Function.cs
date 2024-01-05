@@ -89,6 +89,7 @@ public class Function
                 cmdSQL.Parameters.AddWithValue("_Summary", issue.fields.summary?.ToString() ?? "");
                 cmdSQL.Parameters.AddWithValue("_SignOffForm", issue.fields.customfield_10050?.value.ToString() ?? "");
                 cmdSQL.Parameters.AddWithValue("_Milestone", issue.key);
+                cmdSQL.Parameters.AddWithValue("_PM", issue.fields.customfield_10051?.displayName.ToString() ?? "Tommy Loyd");
                 Console.WriteLine("Starting Insert");
                 cmdSQL.ExecuteNonQuery();
             }
