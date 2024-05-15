@@ -70,7 +70,7 @@ public class Function
                 {
                     cmdSQL.Parameters.AddWithValue("_Project", "");
                 }
-                if(issue.key == "C00000186-26")
+                if(issue.key == "C00000189-7")
                 {
                     Console.WriteLine("Stop");
                 }
